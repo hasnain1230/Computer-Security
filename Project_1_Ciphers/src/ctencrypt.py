@@ -5,19 +5,20 @@ import sys
 
 
 def encrypt(plaintext, key, blocksize):
-    columns = len(key)
-    sorted_key = sorted([(char, i) for i, char in enumerate(key.encode())])
+    columns = len(key) # Number of columns in the table
 
-    blocks = [plaintext[i: i + blocksize] for i in range(0, len(plaintext), blocksize)]
+    sorted_key = sorted([(char, i) for i, char in enumerate(key)]) # Sort the key and store the index of each character
+
+    blocks = [plaintext[i: i + blocksize] for i in range(0, len(plaintext), blocksize)] # Break the plaintext into blocks
 
     ciphertext = bytearray()
     for block in blocks:
-        table = [bytearray() for _ in range(columns)]
+        table = [bytearray() for _ in range(columns)] # Create a table with a column for each character in the key
         for i, byte in enumerate(block):
-            table[i % columns].append(byte)
+            table[i % columns].append(byte)  # Append the byte to the appropriate column
 
-        for _, index in sorted_key:
-            ciphertext.extend(table[index])
+        for _, index in sorted_key: # Append the bytes from the table to the ciphertext according to the sorted key sequence
+            ciphertext.extend(table[index]) # Append the bytes from the table to the ciphertext
 
     return ciphertext
 

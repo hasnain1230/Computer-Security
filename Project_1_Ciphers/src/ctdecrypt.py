@@ -13,8 +13,8 @@ def create_table(rows, columns, extra_cols):
 
 
 def decrypt(ciphertext, key, blocksize):
-    columns = len(key)
-    sorted_key = sorted([(char, i) for i, char in enumerate(key.encode())])
+    columns = len(key) # Number of columns in the table
+    sorted_key = sorted([(char, i) for i, char in enumerate(key)]) # Sort the key and store the index of each character
 
     blocks = [ciphertext[i: i + blocksize] for i in
               range(0, len(ciphertext), blocksize)]  # Split the ciphertext into blocks
