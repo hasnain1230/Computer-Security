@@ -22,9 +22,9 @@ def decrypt(ciphertext, key, blocksize):
     plaintext = bytearray()
 
     for block in blocks:
-        if len(block) < blocksize:
-            rows = len(block) // columns
-            extra_cols = len(block) % columns
+        if len(block) < blocksize: # Pad the block if necessary
+            rows = len(block) // columns # Number of rows in the table since the block may not be full
+            extra_cols = len(block) % columns # Number of extra columns
         else:
             rows = blocksize // columns
             extra_cols = blocksize % columns
@@ -37,11 +37,11 @@ def decrypt(ciphertext, key, blocksize):
         for character, index in sorted_key:
             for i in range(rows + (1 if index < extra_cols else 0)):
                 if count < len(block):
-                    table[i][index] = block[count:count+1]
+                    table[i][index] = block[count: count + 1] # Fill the table with the bytes from the block according to the sorted key sequence column-wise
                     count += 1
 
         for row in table:
-            plaintext.extend(b''.join(row))
+            plaintext.extend(b''.join(row)) # Append the bytes from the table to the plaintext
 
     return plaintext
 

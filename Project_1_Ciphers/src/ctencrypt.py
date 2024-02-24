@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import argparse
 import sys
 
@@ -50,7 +48,6 @@ def main():
     # Output the ciphertext as binary
     sys.stdout.buffer.write(ciphertext)
 
-# TODO: Hasnain, please review this code and make sure you understand how it works.
 
 if __name__ == '__main__':
     main()
