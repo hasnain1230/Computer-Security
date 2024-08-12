@@ -1,0 +1,65 @@
+#!/usr/bin/python3
+import argparse
+import base64
+import datetime
+import hashlib
+import os
+import sys
+from zoneinfo import ZoneInfo
+
+
+def create_log_files():
+    # If log.txt doesn't exist, create it and loghead.txt; in other words, create log files if log.txt doesn't exist
+    # This means that even if loghead.txt exists, it'll be ignored, log.txt will be created, and loghead.txt will be
+    # will be empty as well.
+    if not os.path.exists('log.txt'): # Create log file if it doesn't exist
+        file = open('log.txt', 'w')
+        file.close()
+        file = open('loghead.txt', 'w') # Create loghead too
+        file.close()
+    elif not os.path.exists('loghead.txt') and os.path.exists('log.txt'):
+        # Print to error stream
+        print('loghead.txt not found. Log integrity has been compromised.', file=sys.stderr)
+        sys.exit(1)
+
+
+def get_timestamp():
+    return datetime.datetime.now(tz=ZoneInfo('America/New_York')).strftime('%Y-%m-%d %H:%M:%S')
+
+
+def add_log(log_string):
+    log_string = log_string.replace('\n', ' ')
+    with open('loghead.txt', 'r+') as file:
+        head = file.read().strip()
+        head_empty = (not head or head == '' or head == '\n')
+        if head_empty:
+            head = 'begin'
+            file.write("begin")
+            # The below doesn't make sense, but it was mentioned in the write up, so I am using what the write up says
+            # But log.txt would definitely exist and be empty if we are here, it's logically impossible for log.txt to be empty
+            # but whatever.
+            log_file = open('log.txt', 'w')  # Create log file since it doesn't exist...
+            log_file.close()
+
+    with open('log.txt', 'a') as file:
+        full_log_string = f'{get_timestamp()} - {head} {log_string}'
+        file.write(f'{full_log_string}\n') # Write to log file
+
+    # Get sha256 hash of full log string
+    full_log_string_hash = hashlib.sha256(full_log_string.encode()).hexdigest() # For debugging purposes, I use the hex digest and then convert it into bytes later, this is on purpose
+    base64_encoded_full_log_string_hash = base64.b64encode(bytes.fromhex(full_log_string_hash)).decode('utf-8') # convert the hex digest to bytes and then encode it to base64
+
+    with open('loghead.txt', 'w') as file:
+        file.write(base64_encoded_full_log_string_hash) # Write the base64 encoded hash to loghead.txt
+
+
+def main(args):
+    parser = argparse.ArgumentParser(prog="addlog", description='Add log to file') # Argparse just makes handling arguments easier
+    parser.add_argument('log_string', type=str, help='Log string you want to add')
+    args = parser.parse_args(args)
+    create_log_files()
+    add_log(args.log_string)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

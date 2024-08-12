@@ -1,0 +1,69 @@
+#!/usr/bin/python3
+
+import base64
+import hashlib
+import os
+import sys
+
+
+def split_log_entry(log_entry):  # Split log entry into datetime, base64, and log data
+    parts = log_entry.split(" - ")
+    datetime_str = parts[0]
+    try:  # If there is an empty log data, this code won't work, so we need to catch the exception and set log_data to empty string
+        base64_str, log_data = parts[1].split(" ", 1)
+    except ValueError:
+        base64_str = parts[1]
+        log_data = ''
+
+    return [datetime_str, base64_str, log_data]
+
+
+def validate_log_file_existance():
+    if not os.path.exists('log.txt') or not os.path.exists('loghead.txt'):
+        print('failed: log.txt or loghead.txt not found', file=sys.stderr)
+        sys.exit(1)
+
+
+def main():
+    validate_log_file_existance()
+    with open('log.txt', 'r') as file:
+        logs = file.readlines()
+
+    base64_str = None
+
+    for x, log in enumerate(logs):
+        if log[len(log) - 1] == '\n':  # Remove newline character if it exists
+            log = log[:-1]
+
+        if x == 0 and split_log_entry(log)[1] != 'begin':  # Check if the first log entry starts with "begin"
+            print('failed: lack of a starting line with "begin"')
+            sys.exit(1)
+
+        log_hash = hashlib.sha256(log.encode()).hexdigest()  # Remove newline character before hashing
+        base64_str = base64.b64encode(bytes.fromhex(log_hash)).decode('utf-8')
+
+        # Check the next log entry if it exists
+        if x + 1 < len(logs):
+            next_log = logs[x + 1]
+            next_parts = split_log_entry(next_log)
+            next_base64_str = next_parts[1]
+            if base64_str != next_base64_str:  # Check if the hash of the current log entry matches the hash in the
+                # next log entry
+                print(f'failed: line {x + 1} hash does not match the stored hash on line {x + 2} hash')
+                sys.exit(1)
+
+    with open('loghead.txt', 'r') as file:
+        head = file.read().strip()
+
+    if head != base64_str:  # Check if the last log hash matches the hash in loghead.txt
+        print('failed: the last log hash does not match the hash in loghead.txt')
+        sys.exit(1)
+
+    print('valid')  # If all checks pass, print 'valid'
+
+
+if __name__ == '__main__':
+    if len(sys.argv) != 1:
+        print('Usage: checklog\nToo many arguments provided', file=sys.stderr)
+        sys.exit(1)
+    main()
